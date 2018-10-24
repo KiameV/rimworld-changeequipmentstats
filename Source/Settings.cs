@@ -170,7 +170,7 @@ namespace ChangeEquipmentStats
             ThingDef d = this.selected;
             Stats s = new Stats
             {
-                DefName = d.defName,
+                label = d.defName,
                 IsApparel = d.IsApparel,
                 IsWeapon = d.IsWeapon
             };
@@ -341,7 +341,7 @@ namespace ChangeEquipmentStats
 
         public void Init()
         {
-            if (this.ApparelDefs.Count == 0 || 
+            if (this.ApparelDefs.Count == 0 ||
                 this.WeaponDefs.Count == 0)
             {
                 this.ApparelDefs.Clear();
@@ -362,32 +362,59 @@ namespace ChangeEquipmentStats
                 Backup.Init(this.ApparelDefs.Values, this.WeaponDefs.Values);
             }
 
-            if (this.exposedStats != null)
+            if (this.ApparelDefs.Count != 0 ||
+                this.WeaponDefs.Count != 0)
             {
-                foreach(Stats s in this.exposedStats)
+                if (this.exposedStats != null)
                 {
-                    if (s.IsApparel)
+#if DEBUG
+                    StringBuilder sb = new StringBuilder("Exposed:");
+                    sb.AppendLine();
+                    foreach (Stats s in exposedStats)
                     {
-                        if (this.ApparelDefs.TryGetValue(s.DefName, out ThingDef d))
-                        {
-                            s.ApplyStats(d);
-                        }
+                        sb.Append(s.label + ", ");
                     }
-                    if (s.IsWeapon)
+                    sb.AppendLine();
+                    sb.AppendLine("Apparel:");
+                    foreach (string s in ApparelDefs.Keys)
                     {
-                        if (this.WeaponDefs.TryGetValue(s.DefName, out ThingDef d))
-                        {
-                            s.ApplyStats(d);
-                        }
+                        sb.Append(s + ", ");
                     }
-                }
+                    sb.AppendLine();
+                    sb.AppendLine("Weapons:");
+                    foreach (string s in WeaponDefs.Keys)
+                    {
+                        sb.Append(s + ", ");
+                    }
+                    sb.AppendLine();
+                    Log.Warning(sb.ToString());
+#endif
 
-                this.exposedStats.Clear();
-                this.exposedStats = null;
+                    foreach (Stats s in this.exposedStats)
+                    {
+                        if (s.IsApparel)
+                        {
+                            if (this.ApparelDefs.TryGetValue(s.label, out ThingDef d))
+                            {
+                                s.ApplyStats(d);
+                            }
+                        }
+                        if (s.IsWeapon)
+                        {
+                            if (this.WeaponDefs.TryGetValue(s.label, out ThingDef d))
+                            {
+                                s.ApplyStats(d);
+                            }
+                        }
+                    }
+
+                    this.exposedStats.Clear();
+                    this.exposedStats = null;
+                }
             }
         }
 
-        #region Verbs
+#region Verbs
         private void PopulateVerbBuffers(ref int comBufferIndex, List<VerbProperties> verbs)
         {
             foreach (VerbProperties v in verbs)
@@ -422,6 +449,6 @@ namespace ChangeEquipmentStats
             this.comBuffer[comBufferIndex] = this.DrawInput(x, ref y, "(AI) Avoid Friendly Fire Radius", this.comBuffer[comBufferIndex]);
             ++comBufferIndex;
         }
-        #endregion
+#endregion
     }
 }

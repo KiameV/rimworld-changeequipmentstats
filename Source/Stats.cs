@@ -6,7 +6,7 @@ namespace ChangeEquipmentStats
 {
     class Stats : IExposable
     {
-        public string DefName = null;
+        public string label = null;
         public bool IsApparel = false;
         public bool IsWeapon = false;
         public List<Stat> StatModifiers = null;
@@ -16,7 +16,7 @@ namespace ChangeEquipmentStats
         public Stats() { }
         public Stats(ThingDef d)
         {
-            this.DefName = d.defName;
+            this.label = d.label;
             this.IsApparel = d.IsApparel;
             this.IsWeapon = d.IsWeapon;
             this.SetStatModifiers(d.statBases);
@@ -78,7 +78,9 @@ namespace ChangeEquipmentStats
                     {
                         if (to.stat.ToString().EqualsIgnoreCase(from.stat))
                         {
+#if DEBUG
                             Log.Message(to.stat + " = " + to.value);
+#endif
                             to.value = from.value;
                             break;
                         }
@@ -137,7 +139,7 @@ namespace ChangeEquipmentStats
 
         public void ExposeData()
         {
-            Scribe_Values.Look(ref this.DefName, "defName");
+            Scribe_Values.Look(ref this.label, "label");
             Scribe_Values.Look(ref this.IsApparel, "isApparel");
             Scribe_Values.Look(ref this.IsWeapon, "isWeapon");
             Scribe_Collections.Look(ref this.StatModifiers, "statModifiers", LookMode.Deep);
