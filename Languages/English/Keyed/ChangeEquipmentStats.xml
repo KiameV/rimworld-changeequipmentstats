@@ -3,4 +3,6 @@
 	<ChangeEquipmentStats>Change Equipment Stats</ChangeEquipmentStats>
 	<ChangeEquipmentStats.Apply>Apply</ChangeEquipmentStats.Apply>
 	<ChangeEquipmentStats.ResetAll>Reset All</ChangeEquipmentStats.ResetAll>
+	<ChangeEquipmentStats.RangedStats>Ranged Stats</ChangeEquipmentStats.RangedStats>
+	<ChangeEquipmentStats.MeleeStats>Melee Stats</ChangeEquipmentStats.MeleeStats>
 </LanguageData>
