@@ -1,4 +1,5 @@
 ﻿using RimWorld;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Verse;
@@ -13,6 +14,7 @@ namespace ChangeEquipmentStats
         public List<Stat> StatModifiers = null;
         public List<VerbStats> VerbStats = null;
         public List<ToolStats> Tools = null;
+        public List<Stat> EquippedStatOffsets = null;
 
         public Stats() { }
         public Stats(ThingDef d)
@@ -23,6 +25,7 @@ namespace ChangeEquipmentStats
             this.SetStatModifiers(d.statBases);
             this.SetVerbs(d.Verbs);
             this.SetTools(d.tools);
+            this.SetEquippedStatOffsets(d.equippedStatOffsets);
         }
 
         public void SetTools(List<Tool> tools)
@@ -49,6 +52,18 @@ namespace ChangeEquipmentStats
             }
         }
 
+        public void SetEquippedStatOffsets(List<StatModifier> offsets)
+        {
+            if (offsets != null)
+            {
+                this.EquippedStatOffsets = new List<Stat>(offsets.Count);
+                foreach (StatModifier m in offsets)
+                {
+                    this.EquippedStatOffsets.Add(new Stat(m));
+                }
+            }
+        }
+
         public void SetStatModifiers(List<StatModifier> modifiers)
         {
             if (modifiers != null)
@@ -56,12 +71,7 @@ namespace ChangeEquipmentStats
                 this.StatModifiers = new List<Stat>(modifiers.Count);
                 foreach (StatModifier m in modifiers)
                 {
-                    this.StatModifiers.Add(
-                        new Stat
-                        {
-                            stat = m.stat.ToString(),
-                            value = m.value
-                        });
+                    this.StatModifiers.Add(new Stat(m));
                 }
             }
         }
@@ -71,32 +81,34 @@ namespace ChangeEquipmentStats
 #if DEBUG
             Log.Warning("ApplyStats for " + d.label);
 #endif
-            if (this.StatModifiers != null && d.statBases != null)
+            try
             {
-                foreach (Stat from in this.StatModifiers)
+                if (this.StatModifiers != null && d.statBases != null)
                 {
-                    foreach (StatModifier to in d.statBases)
+                    foreach (Stat from in this.StatModifiers)
                     {
-                        if (to.stat.ToString().EqualsIgnoreCase(from.stat))
+                        foreach (StatModifier to in d.statBases)
                         {
+                            if (to.stat.ToString().EqualsIgnoreCase(from.stat))
+                            {
 #if DEBUG
                             Log.Message(to.stat + " = " + to.value);
 #endif
-                            to.value = from.value;
-                            break;
+                                to.value = from.value;
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
-            if (this.VerbStats != null && d.Verbs != null)
-            {
-                foreach (VerbStats from in this.VerbStats)
+                if (this.VerbStats != null && d.Verbs != null)
                 {
-                    foreach (VerbProperties to in d.Verbs)
+                    foreach (VerbStats from in this.VerbStats)
                     {
-                        if (to.verbClass.Name.Equals(from.name))
+                        foreach (VerbProperties to in d.Verbs)
                         {
+                            if (to.verbClass.Name.Equals(from.name))
+                            {
 #if DEBUG
                             Log.Message("warmupTime = " + from.warmupTime);
                             Log.Message("range = " + from.range);
@@ -105,34 +117,53 @@ namespace ChangeEquipmentStats
                             Log.Message("muzzleFlashScale = " + from.muzzleFlashScale);
                             Log.Message("aiAvoidFriendlyRadius = " + from.aiAvoidFriendlyRadius);
 #endif
-                            to.warmupTime = from.warmupTime;
-                            to.range = from.range;
-                            to.ticksBetweenBurstShots = (int)from.timeBetweenShots;
-                            to.burstShotCount = (int)from.burstShotCount;
-                            to.muzzleFlashScale = from.muzzleFlashScale;
-                            to.ai_AvoidFriendlyFireRadius = from.aiAvoidFriendlyRadius;
+                                to.warmupTime = from.warmupTime;
+                                to.range = from.range;
+                                to.ticksBetweenBurstShots = (int)from.timeBetweenShots;
+                                to.burstShotCount = (int)from.burstShotCount;
+                                to.muzzleFlashScale = from.muzzleFlashScale;
+                                to.ai_AvoidFriendlyFireRadius = from.aiAvoidFriendlyRadius;
 
-                            break;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (this.Tools != null && d.tools != null)
+                {
+                    foreach (ToolStats from in this.Tools)
+                    {
+                        foreach (Tool to in d.tools)
+                        {
+                            if (from.label.Equals(to.label))
+                            {
+                                to.power = from.power;
+                                to.armorPenetration = from.armorPenetration;
+                                to.cooldownTime = from.cooldownTime;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (this.EquippedStatOffsets != null && d.equippedStatOffsets != null)
+                {
+                    foreach (Stat from in this.EquippedStatOffsets)
+                    {
+                        foreach (StatModifier to in d.equippedStatOffsets)
+                        {
+                            if (to.stat.ToString().EqualsIgnoreCase(from.stat))
+                            {
+                                to.value = from.value;
+                            }
                         }
                     }
                 }
             }
-
-            if (this.Tools != null && d.tools != null)
+            catch (Exception e)
             {
-                foreach (ToolStats from in this.Tools)
-                {
-                    foreach (Tool to in d.tools)
-                    {
-                        if (from.label.Equals(to.label))
-                        {
-                            to.power = from.power;
-                            to.armorPenetration = from.armorPenetration;
-                            to.cooldownTime = from.cooldownTime;
-                            break;
-                        }
-                    }
-                }
+                Log.Warning("Failed to apply stats [" + d.defName + "]\n" + e.Message);
             }
 #if DEBUG
             Log.Warning("ApplyStats Done");
@@ -147,6 +178,7 @@ namespace ChangeEquipmentStats
             Scribe_Collections.Look(ref this.StatModifiers, "statModifiers", LookMode.Deep);
             Scribe_Collections.Look(ref this.VerbStats, "verbStats", LookMode.Deep);
             Scribe_Collections.Look(ref this.Tools, "tools", LookMode.Deep);
+            Scribe_Collections.Look(ref this.EquippedStatOffsets, "equippedStatOffsets", LookMode.Deep);
         }
     }
 
@@ -154,6 +186,13 @@ namespace ChangeEquipmentStats
     {
         public string stat;
         public float value;
+
+        public Stat() { }
+        public Stat(StatModifier m)
+        {
+            this.stat = m.stat.ToString();
+            this.value = m.value;
+        }
 
         public void ExposeData()
         {

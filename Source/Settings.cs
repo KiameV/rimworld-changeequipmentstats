@@ -87,6 +87,8 @@ namespace ChangeEquipmentStats
                     inputFieldCount += this.GetVerbFields(this.selected.Verbs) + 1;
                 if (this.selected.tools != null)
                     inputFieldCount += this.selected.tools.Count * 4;
+                if (this.selected.equippedStatOffsets != null)
+                    inputFieldCount += this.selected.equippedStatOffsets.Count;
 
                 if (inputFieldCount > 0)
                 {
@@ -107,6 +109,14 @@ namespace ChangeEquipmentStats
                         foreach (Tool t in this.selected.tools)
                         {
                             this.DrawToolInput(20, ref y, ref comBufferIndex, t);
+                        }
+                    }
+                    if (this.selected.equippedStatOffsets != null)
+                    {
+                        foreach (StatModifier m in this.selected.equippedStatOffsets)
+                        {
+                            this.comBuffer[comBufferIndex] = this.DrawInput(0, ref y, m.stat.ToString(), this.comBuffer[comBufferIndex]);
+                            ++comBufferIndex;
                         }
                     }
                     Widgets.EndScrollView();
@@ -203,12 +213,11 @@ namespace ChangeEquipmentStats
                 s.StatModifiers = new List<Stat>(d.statBases.Count);
                 foreach (StatModifier sm in d.statBases)
                 {
-                    float f = this.Parse(index, sm.value, sm.stat.ToString());
                     s.StatModifiers.Add(
                         new Stat
                         {
                             stat = sm.stat.ToString(),
-                            value = f
+                            value = this.Parse(index, sm.value, sm.stat.ToString())
                         });
                     ++index;
                 }
@@ -268,6 +277,21 @@ namespace ChangeEquipmentStats
                 }
             }
 
+            if (d.equippedStatOffsets != null)
+            {
+                s.EquippedStatOffsets = new List<Stat>(d.equippedStatOffsets.Count);
+                foreach (StatModifier sm in d.equippedStatOffsets)
+                {
+                    s.EquippedStatOffsets.Add(
+                        new Stat
+                        {
+                            stat = sm.stat.ToString(),
+                            value = this.Parse(index, sm.value, sm.stat.ToString())
+                        });
+                    ++index;
+                }
+            }
+
             s.ApplyStats(d);
             for (int i = 0; i < projectiles.Count; ++i)
             {
@@ -311,8 +335,10 @@ namespace ChangeEquipmentStats
                 neededSize += d.statBases.Count;
             if (d.Verbs != null)
                 neededSize += this.GetVerbFields(d.Verbs);
-            if (this.selected.tools != null)
-                neededSize += this.selected.tools.Count * 3;
+            if (d.tools != null)
+                neededSize += d.tools.Count * 3;
+            if (d.equippedStatOffsets != null)
+                neededSize += d.equippedStatOffsets.Count;
 
             while (comBuffer.Count <= neededSize)
             {
@@ -343,6 +369,15 @@ namespace ChangeEquipmentStats
                     comBuffer[index] = t.armorPenetration.ToString();
                     ++index;
                     comBuffer[index] = t.cooldownTime.ToString();
+                    ++index;
+                }
+            }
+
+            if (d.equippedStatOffsets != null)
+            {
+                foreach (StatModifier m in d.equippedStatOffsets)
+                {
+                    comBuffer[index] = m.value.ToString();
                     ++index;
                 }
             }
